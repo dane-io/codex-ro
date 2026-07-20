@@ -1,0 +1,5 @@
+*.mod
+*.pp
+*.if
+*.fc
+/tmp

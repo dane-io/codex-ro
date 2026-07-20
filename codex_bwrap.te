@@ -1,0 +1,22 @@
+policy_module(codex_bwrap, 1.0)
+
+gen_require(`
+    attribute container_net_domain;
+
+    type container_file_t;
+    type device_t;
+    type devpts_t;
+    type proc_t;
+')
+
+# Create a standard confined container domain with MCS isolation and
+# normal access to container_file_t.
+container_domain_template(codex_bwrap, container)
+
+# Codex requires network access.
+typeattribute codex_bwrap_t container_net_domain;
+
+# Bubblewrap-specific filesystem operations.
+allow codex_bwrap_t device_t:filesystem remount;
+allow codex_bwrap_t devpts_t:filesystem mount;
+allow codex_bwrap_t proc_t:filesystem { mount remount };
