@@ -109,24 +109,6 @@ def remove_from_allowlist(path: str):
     save_config(config)
 
 
-# Return --security-opt option and bool if SELinux relabeling needs added
-def host_security_options() -> tuple[str, bool]:
-    # Check for SELinux
-    if Path("/sys/fs/selinux/enforce").exists():
-        return ("--security-opt=label=type:codex_bwrap_t", True)
-
-    apparmor_enabled_path = Path("/sys/module/apparmor/parameters/enabled")
-    if apparmor_enabled_path.exists():
-        try:
-            if apparmor_enabled_path.read_text().strip().lower() == "y":
-                return ("--security-opt=apparmor=codex-ro", False)
-        except OSError:
-            pass
-
-    fail("Neither SELinux nor AppArmor is enabled!")
-
-
-
 def build_container(force_update: bool):
     config = load_config()
     project_root = Path(__file__).resolve().parent
@@ -155,8 +137,6 @@ def build_container(force_update: bool):
 
 def login_to_codex():
     config = load_config()
-    security_options, selinux_relabel = host_security_options()
-    volume_options = ":z" if selinux_relabel else ""
 
     exec_command(
         [
@@ -166,8 +146,8 @@ def login_to_codex():
             "-it",
             "--network",
             "host",
-            security_options,
-            f"--volume={STATE_VOLUME}:/root/.codex{volume_options}",
+            "--security-opt=label=type:codex_bwrap_t",
+            f"--volume={STATE_VOLUME}:/root/.codex:z",
             "--entrypoint",
             "codex",
             config["image"],
@@ -190,10 +170,6 @@ def run_codex():
             f"To allow it, run: {suggested_command}"
         )
 
-    security_options, selinux_relabel = host_security_options()
-    workspace_options = ":ro,z" if selinux_relabel else ":ro"
-    volume_options = ":z" if selinux_relabel else ""
-
     exec_command(
         [
             "podman",
@@ -201,9 +177,9 @@ def run_codex():
             "--rm",
             "-it",
             "--read-only",
-            security_options,
-            f"--volume={workspace}:/workspace{workspace_options}",
-            f"--volume={STATE_VOLUME}:/root/.codex{volume_options}",
+            "--security-opt=label=type:codex_bwrap_t",
+            f"--volume={workspace}:/workspace:ro,z",
+            f"--volume={STATE_VOLUME}:/root/.codex:z",
             "--workdir",
             "/workspace",
             config["image"],
@@ -213,11 +189,11 @@ def run_codex():
 
 def main():
     if os.geteuid() == 0:
-        fail("refusing to run as root")
+            fail("refusing to run as root")
 
     parser = argparse.ArgumentParser(
                     prog='codex-ro',
-                    description='Run Codex as read only in isolated Podman container with SELinux / AppArmor support.')
+                    description='Run Codex as read only in isolated Podman container with SELinux support.')
     subcommands = parser.add_subparsers(dest="command", required=True)
     run_cmd = subcommands.add_parser("run", help="Run Codex")
     allow_cmd = subcommands.add_parser("allow", help="Configure allow list")
