@@ -1,5 +1,5 @@
 mod incus;
-use incus::{config_incus, start_vm, stop_vm, vm_shell, uninstall};
+use incus::{config_incus, start_vm, stop_vm, run_vm_session, uninstall};
 use clap::{Arg, ArgGroup, Command, ValueHint, ArgAction, value_parser};
 use clap_complete::{Generator, Shell, generate};
 use std::io;
@@ -86,8 +86,7 @@ fn main() {
         Some(("run", args)) => {
             let project = args.get_one::<String>("project").expect("has default");
             println!("Would run Codex for {project}");
-            _ = start_vm();
-            _ = vm_shell();
+            _ = run_vm_session();
         }
         Some(("start", _args)) => {
             _ = start_vm();

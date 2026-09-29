@@ -7,7 +7,7 @@ const VM_ACL: &str = "codex-vm-internet";
 const VM_IMAGE: &str = "images:debian/13";
 
 
-pub fn run_incus(args: &[&str]) -> io::Result<()> {
+fn run_incus(args: &[&str]) -> io::Result<()> {
     let status = Command::new("incus").args(args).status()?;
 
     if status.success() {
@@ -66,13 +66,47 @@ fn create_vm() -> io::Result<()> {
 }
 
 
-pub fn start_vm() -> io::Result<()> {
+fn wait_for_vm() -> io::Result<()> {
+    run_incus(&[
+        "wait", VM_NAME, "agent",
+        "--timeout", "120",
+    ])
+}
+
+
+fn start_vm_process() -> io::Result<()> {
     run_incus(&["start", VM_NAME])
 }
 
 
-pub fn vm_shell() -> io::Result<()> {
+pub fn start_vm() -> io::Result<()> {
+    start_vm_process()?;
+    wait_for_vm()
+}
+
+
+fn vm_shell() -> io::Result<()> {
     run_incus(&["exec", VM_NAME, "--", "bash"])
+}
+
+
+pub fn run_vm_session() -> io::Result<()> {
+    start_vm_process()?;
+
+    let session_result = wait_for_vm().and_then(|_| vm_shell());
+    let stop_result = stop_vm();
+
+    match (session_result, stop_result) {
+        (Ok(()), Ok(())) => Ok(()),
+        (Err(error), Ok(())) => Err(error),
+        (Ok(()), Err(error)) => Err(error),
+        (Err(session_error), Err(stop_error)) => Err(io::Error::other(
+            format!(
+                "VM session failed: {session_error}; \
+                 additionally failed to stop VM: {stop_error}"
+            ),
+        )),
+    }
 }
 
 
