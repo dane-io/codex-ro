@@ -1,5 +1,5 @@
 mod incus;
-use incus::{config_incus, start_vm, stop_vm, run_vm_session, uninstall};
+use incus::{config_incus, run_vm_session, uninstall};
 use clap::{Arg, ArgGroup, Command, ValueHint, ArgAction, value_parser};
 use clap_complete::{Generator, Shell, generate};
 use std::io;
@@ -20,14 +20,6 @@ fn build_cli() -> Command {
                         .default_value(".")
                         .value_hint(ValueHint::DirPath),
                 ),
-        )
-        .subcommand(
-            Command::new("start")
-                .about("Start VM")
-        )
-        .subcommand(
-            Command::new("stop")
-                .about("Stop VM")
         )
         .subcommand(
             Command::new("config")
@@ -87,12 +79,6 @@ fn main() {
             let project = args.get_one::<String>("project").expect("has default");
             println!("Would run Codex for {project}");
             _ = run_vm_session();
-        }
-        Some(("start", _args)) => {
-            _ = start_vm();
-        }
-        Some(("stop", _args)) => {
-            _ = stop_vm();
         }
         Some(("config", args)) => {
             if args.get_flag("check") {

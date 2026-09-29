@@ -79,14 +79,13 @@ fn start_vm_process() -> io::Result<()> {
 }
 
 
-pub fn start_vm() -> io::Result<()> {
-    start_vm_process()?;
-    wait_for_vm()
+fn vm_shell() -> io::Result<()> {
+    run_incus(&["exec", VM_NAME, "--", "bash"])
 }
 
 
-fn vm_shell() -> io::Result<()> {
-    run_incus(&["exec", VM_NAME, "--", "bash"])
+pub fn stop_vm() -> io::Result<()> {
+    run_incus(&["stop", VM_NAME])
 }
 
 
@@ -115,11 +114,6 @@ pub fn uninstall() -> io::Result<()> {
     run_incus(&["delete", VM_NAME])?;
     run_incus(&["network", "delete", VM_NIC])?;
     run_incus(&["network", "acl", "delete", VM_ACL])
-}
-
-
-pub fn stop_vm() -> io::Result<()> {
-    run_incus(&["stop", VM_NAME])
 }
 
 
