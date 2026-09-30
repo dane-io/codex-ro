@@ -89,7 +89,7 @@ pub fn stop_vm() -> io::Result<()> {
 }
 
 
-pub fn run_vm_session() -> io::Result<()> {
+pub fn run_vm_session(_project: &str) -> io::Result<()> {
     start_vm_process()?;
 
     let session_result = wait_for_vm().and_then(|_| vm_shell());

@@ -1,5 +1,8 @@
 mod incus;
+mod config;
+
 use incus::{config_incus, run_vm_session, uninstall};
+use config::{add_to_allowlist, remove_from_allowlist, list_allowlist};
 use clap::{Arg, ArgGroup, Command, ValueHint, ArgAction, value_parser};
 use clap_complete::{Generator, Shell, generate};
 use std::io;
@@ -55,6 +58,33 @@ fn build_cli() -> Command {
                 )
         )
         .subcommand(
+            Command::new("whitelist")
+                .about("Configure filepath whitelist at ~/.config/codex-ro/config.toml")
+                .arg(
+                    Arg::new("add")
+                        .long("add")
+                        .help("Add filepath to whitelist")
+                        .value_hint(ValueHint::DirPath),
+                )
+                .arg(
+                    Arg::new("remove")
+                        .long("remove")
+                        .help("Remove filepath from whitelist")
+                        .value_hint(ValueHint::DirPath),
+                )
+                .arg(
+                    Arg::new("list")
+                        .long("list")
+                        .help("List filepath from whitelist")
+                        .action(ArgAction::SetTrue),
+                )
+                .group(
+                    ArgGroup::new("config_action")
+                        .args(["add", "remove", "list"])
+                        .required(true),
+                )
+        )
+        .subcommand(
             Command::new("completions")
                 .about("Print a shell completion script")
                 .arg(
@@ -71,27 +101,37 @@ fn print_completions<G: Generator>(generator: G, cmd: &mut Command) {
 }
 
 
-fn main() {
+fn main() -> io::Result<()> {
     let matches = build_cli().get_matches();
 
     match matches.subcommand() {
         Some(("run", args)) => {
             let project = args.get_one::<String>("project").expect("has default");
-            println!("Would run Codex for {project}");
-            _ = run_vm_session();
+            run_vm_session(project)?;
         }
         Some(("config", args)) => {
             if args.get_flag("check") {
                 println!("Would check Incus configuration");
             }
             else if args.get_flag("init") {
-                _ = config_incus();
+                config_incus()?;
             }
             else if args.get_flag("deinit") {
-                _ = uninstall();
+                uninstall()?;
             }
             else if args.get_flag("login") {
                 println!("Would log in to Codex");
+            }
+        }
+        Some(("whitelist", args)) => {
+            if let Some(path) = args.get_one::<String>("add") {
+                add_to_allowlist(path)?;
+            }
+            else if let Some(path) = args.get_one::<String>("remove") {
+                remove_from_allowlist(path)?;
+            }
+            else if args.get_flag("list") {
+                list_allowlist()?;
             }
         }
         Some(("completions", args)) => {
@@ -101,4 +141,6 @@ fn main() {
         }
         _ => unreachable!("a subcommand is required"),
     }
+
+    Ok(())
 }
