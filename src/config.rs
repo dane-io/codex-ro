@@ -40,6 +40,14 @@ pub fn load_config() -> io::Result<Config> {
 }
 
 
+pub fn is_project_path_allowed(path: impl AsRef<Path>) -> io::Result<bool> {
+    let config = load_config()?;
+    let path = fs::canonicalize(path)?;
+
+    Ok(config.allowed_paths.contains(&path))
+}
+
+
 fn save_config(config: &Config) -> io::Result<()> {
     let path = config_path()?;
 

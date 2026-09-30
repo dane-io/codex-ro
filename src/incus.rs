@@ -1,4 +1,5 @@
 use std::{io, process::Command};
+use crate::config::is_project_path_allowed;
 
 
 const VM_NAME: &str = "codex-vm";
@@ -80,7 +81,7 @@ fn start_vm_process() -> io::Result<()> {
 
 
 fn vm_shell() -> io::Result<()> {
-    run_incus(&["exec", VM_NAME, "--", "bash"])
+    run_incus(&["exec", VM_NAME, "--mode", "interactive", "--", "bash"])
 }
 
 
@@ -89,22 +90,63 @@ pub fn stop_vm() -> io::Result<()> {
 }
 
 
-pub fn run_vm_session(_project: &str) -> io::Result<()> {
-    start_vm_process()?;
+fn mount_project(project: &str) -> io::Result<()> {
+    run_incus(&[
+        "config", "device", "add",
+        VM_NAME,
+        "project",
+        "disk",
+        &format!("source={project}"),
+        "path=/workspace",
+        "readonly=true",
+    ])
+}
+
+
+fn unmount_project() -> io::Result<()> {
+    run_incus(&[
+        "config", "device", "remove",
+        VM_NAME,
+        "project",
+    ])
+}
+
+
+pub fn run_vm_session(project: &str) -> io::Result<()> {
+    if !is_project_path_allowed(project)? {
+        return Err(io::Error::other(
+            "project path is not in the whitelist"
+        ));
+    }
+
+    let project = std::fs::canonicalize(project)?;
+    let project = project.to_str().ok_or_else(|| io::Error::other("project path is not valid UTF-8"))?;
+    mount_project(project)?;
+
+    if let Err(start_error) = start_vm_process() {
+        let unmount_result = unmount_project();
+
+        return match unmount_result {
+            Ok(()) => Err(start_error),
+            Err(unmount_error) => Err(io::Error::other(format!(
+                "failed to start VM: {start_error}; additionally failed to unmount project: {unmount_error}"
+            ))),
+        };
+    }
 
     let session_result = wait_for_vm().and_then(|_| vm_shell());
     let stop_result = stop_vm();
+    let unmount_result = unmount_project();
 
-    match (session_result, stop_result) {
-        (Ok(()), Ok(())) => Ok(()),
-        (Err(error), Ok(())) => Err(error),
-        (Ok(()), Err(error)) => Err(error),
-        (Err(session_error), Err(stop_error)) => Err(io::Error::other(
-            format!(
-                "VM session failed: {session_error}; \
-                 additionally failed to stop VM: {stop_error}"
-            ),
-        )),
+    match (session_result, stop_result, unmount_result) {
+        (Ok(()), Ok(()), Ok(())) => Ok(()),
+        (Err(error), Ok(()), Ok(())) => Err(error),
+        (Ok(()), Err(error), Ok(())) => Err(error),
+        (Ok(()), Ok(()), Err(error)) => Err(error),
+
+        (session, stop, unmount) => Err(io::Error::other(format!(
+            "session={session:?}; stop={stop:?}; unmount={unmount:?}"
+        ))),
     }
 }
 
