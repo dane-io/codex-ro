@@ -102,6 +102,11 @@ fn build_cli() -> Command {
                         .help("Edit AGENTS.md")
                         .action(ArgAction::SetTrue),
                 )
+                .group(
+                    ArgGroup::new("config_action")
+                        .args(["init", "edit"])
+                        .required(true),
+                )
         )
         .subcommand(
             Command::new("completions")
