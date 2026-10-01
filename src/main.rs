@@ -1,8 +1,10 @@
 mod incus;
 mod config;
+mod agents;
 
 use incus::{config_incus, run_vm_session, uninstall};
 use config::{add_to_allowlist, remove_from_allowlist, list_allowlist};
+use agents::{create_default_agents, edit_agents};
 use clap::{Arg, ArgGroup, Command, ValueHint, ArgAction, value_parser};
 use clap_complete::{Generator, Shell, generate};
 use std::io;
@@ -85,6 +87,22 @@ fn build_cli() -> Command {
                 )
         )
         .subcommand(
+            Command::new("agents")
+                .about("Configure global AGENTS.md at ~/.config/codex-ro/AGENTS.md")
+                .arg(
+                    Arg::new("init")
+                        .long("init")
+                        .help("Copy default AGENTS.md")
+                        .action(ArgAction::SetTrue),
+                )
+                .arg(
+                    Arg::new("edit")
+                        .long("edit")
+                        .help("Edit AGENTS.md")
+                        .action(ArgAction::SetTrue),
+                )
+        )
+        .subcommand(
             Command::new("completions")
                 .about("Print a shell completion script")
                 .arg(
@@ -132,6 +150,14 @@ fn main() -> io::Result<()> {
             }
             else if args.get_flag("list") {
                 list_allowlist()?;
+            }
+        }
+        Some(("agents", args)) => {
+            if args.get_flag("init") {
+                create_default_agents()?;
+            }
+            else if args.get_flag("edit") {
+                edit_agents()?;
             }
         }
         Some(("completions", args)) => {

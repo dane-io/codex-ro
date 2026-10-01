@@ -1,14 +1,15 @@
 use std::{io, process::Command};
 use crate::config::is_project_path_allowed;
+use crate::agents::copy_agents_to_vm;
 
 
-const VM_NAME: &str = "codex-vm";
+pub const VM_NAME: &str = "codex-vm";
 const VM_NIC: &str = "codexbr0";
 const VM_ACL: &str = "codex-vm-internet";
 const VM_IMAGE: &str = "images:debian/13";
 
 
-fn run_incus(args: &[&str]) -> io::Result<()> {
+pub fn run_incus(args: &[&str]) -> io::Result<()> {
     let status = Command::new("incus").args(args).status()?;
 
     if status.success() {
@@ -118,7 +119,8 @@ pub fn run_vm_session(project: &str) -> io::Result<()> {
             "project path is not in the whitelist"
         ));
     }
-
+    
+    
     let project = std::fs::canonicalize(project)?;
     let project = project.to_str().ok_or_else(|| io::Error::other("project path is not valid UTF-8"))?;
     mount_project(project)?;
@@ -134,7 +136,14 @@ pub fn run_vm_session(project: &str) -> io::Result<()> {
         };
     }
 
-    let session_result = wait_for_vm().and_then(|_| vm_shell());
+    let session_result = (|| -> io::Result<()> {
+        wait_for_vm()?;
+        copy_agents_to_vm()?;
+        vm_shell()?;
+
+        Ok(())
+    })();
+
     let stop_result = stop_vm();
     let unmount_result = unmount_project();
 
