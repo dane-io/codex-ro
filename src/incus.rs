@@ -31,7 +31,7 @@ fn create_bridge() -> io::Result<()> {
         "network", "create", VM_NIC,
         "ipv4.address=auto",
         "ipv4.nat=true",
-        //"ipv4.firewall=false",
+        "ipv4.firewall=false",
         "ipv6.address=none",
     ])
 }
