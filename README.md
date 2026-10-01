@@ -4,12 +4,17 @@ Run Codex inside a VM with project files mounted as read-only.
 
 # Install
 ```bash
+# Install incus, start the socket, and add user to incus-admin group so sudo isn't required
 sudo dnf install incus
 sudo systemctl enable --now incus.socket
 sudo usermod -aG incus-admin "$USER"
 
 # Logout / reboot, then check if user got added to incus-admin
 id -nG
+
+# Change firewalld settings
+sudo firewall-cmd --permanent --zone=trusted --change-interface=codexbr0
+sudo firewall-cmd --reload
 ```
 
 
