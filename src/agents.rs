@@ -7,6 +7,7 @@ const DEFAULT_AGENTS: &str =
 r#"- The project is mounted read-only under /workspace.
 - Restrict filesystem searches to the project directory.
 - Do not attempt to modify project files or system files.
+- Do not attempt to discover, scan, connect to, or otherwise access services or devices on the local/private network.
 "#;
 
 
