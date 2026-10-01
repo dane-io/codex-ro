@@ -1,6 +1,7 @@
 mod incus;
 mod config;
 mod agents;
+mod codex;
 
 use incus::{config_incus, run_vm_session, uninstall};
 use config::{add_to_allowlist, remove_from_allowlist, list_allowlist};

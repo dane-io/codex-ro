@@ -1,5 +1,6 @@
 use std::{env, fs, io, path::PathBuf, process::Command};
 use crate::incus::{run_incus, VM_NAME};
+use crate::codex::CODEX_USER;
 
 
 const DEFAULT_AGENTS: &str = 
@@ -69,7 +70,7 @@ pub fn copy_agents_to_vm() -> io::Result<()> {
     }
     let path = path.to_str().ok_or_else(|| io::Error::other("AGENTS.md path is not valid UTF-8"))?;
 
-    let destination = format!("{VM_NAME}/root/codex/.codex/AGENTS.md");
+    let destination = format!("{VM_NAME}/home/{CODEX_USER}/.codex/AGENTS.md");
 
     run_incus(&["file", "push", "--create-dirs", path, &destination])
 }

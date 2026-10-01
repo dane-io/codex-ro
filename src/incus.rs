@@ -1,6 +1,7 @@
 use std::{io, process::Command};
 use crate::config::is_project_path_allowed;
 use crate::agents::copy_agents_to_vm;
+use crate::codex::{create_codex_user, CODEX_USER};
 
 
 pub const VM_NAME: &str = "codex-vm";
@@ -82,7 +83,16 @@ fn start_vm_process() -> io::Result<()> {
 
 
 fn vm_shell() -> io::Result<()> {
-    run_incus(&["exec", VM_NAME, "--mode", "interactive", "--", "bash"])
+    run_incus(&[
+        "exec",
+        VM_NAME,
+        "--mode",
+        "interactive",
+        "--",
+        "su",
+        "--login",
+        CODEX_USER,
+    ])
 }
 
 
@@ -172,5 +182,18 @@ pub fn config_incus() -> io::Result<()> {
     init_incus()?;
     create_bridge()?;
     create_acl()?;
-    create_vm()
+    create_vm()?;
+
+    start_vm_process()?;
+    let setup_result = wait_for_vm().and_then(|_| create_codex_user());
+    let stop_result = stop_vm();
+
+    match (setup_result, stop_result) {
+        (Ok(()), Ok(())) => Ok(()),
+        (Err(error), Ok(())) => Err(error),
+        (Ok(()), Err(error)) => Err(error),
+        (Err(setup_error), Err(stop_error)) => Err(io::Error::other(format!(
+            "VM setup failed: {setup_error}; additionally failed to stop VM: {stop_error}"
+        ))),
+    }
 }
