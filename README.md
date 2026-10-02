@@ -85,6 +85,19 @@ sudo firewall-cmd --zone=codex-vm --list-all
 sudo firewall-cmd --info-policy=codex-egress
 ```
 
+To test if it works:
+```bash
+# Try pinging a remote URL inside the VM
+
+# Temporarily disable firewalld policy
+sudo firewall-cmd --policy=codex-egress --add-disable
+
+# Try pining again
+
+# Reload the firewalld policy and check the interface is back
+sudo firewall-cmd --reload
+```
+
 
 # Uninstall
 ```bash
