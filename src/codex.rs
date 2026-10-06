@@ -30,3 +30,26 @@ pub fn create_codex_user() -> io::Result<()> {
         &format!("/home/{CODEX_USER}/.codex"),
     ])
 }
+
+
+pub fn install_codex() -> io::Result<()> {
+    run_incus(&["exec", VM_NAME, "--", "apt-get", "update"])?;
+
+    run_incus(&[
+        "exec", VM_NAME, "--",
+        "env", "DEBIAN_FRONTEND=noninteractive",
+        "apt-get", "install", "-y", "--no-install-recommends",
+        "ca-certificates", "nodejs", "npm", "git", "unattended-upgrades",
+    ])?;
+
+    run_incus(&[
+        "exec", VM_NAME, "--",
+        "npm", "install", "--global", "@openai/codex",
+    ])?;
+
+    run_incus(&[
+        "exec", VM_NAME, "--",
+        "su", "--login", CODEX_USER,
+        "--command", "codex --version",
+    ])
+}

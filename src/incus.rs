@@ -1,7 +1,7 @@
 use std::{io, process::Command};
 use crate::config::is_project_path_allowed;
 use crate::agents::copy_agents_to_vm;
-use crate::codex::{create_codex_user, CODEX_USER};
+use crate::codex::{create_codex_user, install_codex, CODEX_USER};
 
 
 pub const VM_NAME: &str = "codex-vm";
@@ -185,7 +185,11 @@ pub fn config_incus() -> io::Result<()> {
     create_vm()?;
 
     start_vm_process()?;
-    let setup_result = wait_for_vm().and_then(|_| create_codex_user());
+    let setup_result = (|| -> io::Result<()> {
+        wait_for_vm()?;
+        create_codex_user()?;
+        install_codex()
+    })();
     let stop_result = stop_vm();
 
     match (setup_result, stop_result) {

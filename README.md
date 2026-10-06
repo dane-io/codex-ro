@@ -14,13 +14,6 @@ sudo usermod -aG incus-admin "$USER"
 id -nG
 ```
 
-## Install codex-ro binary and initialize
-```bash
-cargo install
-
-codex-ro config --init
-```
-
 ## Configure firewalld settings (example using Fedora)
 
 ```bash
@@ -96,6 +89,13 @@ sudo firewall-cmd --policy=codex-egress --add-disable
 
 # Reload the firewalld policy and check the interface is back
 sudo firewall-cmd --reload
+```
+
+## Install codex-ro binary and initialize
+```bash
+cargo install
+
+codex-ro config --init
 ```
 
 
