@@ -1,7 +1,7 @@
 use std::{io, process::Command};
 use crate::config::is_project_path_allowed;
 use crate::agents::copy_agents_to_vm;
-use crate::codex::{create_codex_user, install_codex, run_codex, CODEX_USER};
+use crate::codex::{create_codex_user, install_codex, run_codex, login_codex, CODEX_USER};
 
 
 pub const VM_NAME: &str = "codex-vm";
@@ -72,6 +72,11 @@ fn create_vm() -> io::Result<()> {
 fn wait_for_vm() -> io::Result<()> {
     run_incus(&[
         "wait", VM_NAME, "agent",
+        "--timeout", "120",
+    ])?;
+
+    run_incus(&[
+        "wait", VM_NAME, "ipv4",
         "--timeout", "120",
     ])
 }
@@ -197,6 +202,26 @@ pub fn run_vm_session(project: &str) -> io::Result<()> {
         (session, stop, unmount) => Err(io::Error::other(format!(
             "session={session:?}; stop={stop:?}; unmount={unmount:?}"
         ))),
+    }
+}
+
+
+pub fn run_vm_login_session() -> io::Result<()> {
+    start_vm_process()?;
+
+    let login_result = wait_for_vm().and_then(|_| login_codex());
+    let stop_result = stop_vm();
+
+    match (login_result, stop_result) {
+        (Ok(()), Ok(())) => Ok(()),
+        (Err(error), Ok(())) => Err(error),
+        (Ok(()), Err(error)) => Err(error),
+        (Err(login_error), Err(stop_error)) => {
+            Err(io::Error::other(format!(
+                "Codex login failed: {login_error}; \
+                 additionally failed to stop VM: {stop_error}"
+            )))
+        }
     }
 }
 

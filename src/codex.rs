@@ -55,6 +55,16 @@ pub fn install_codex() -> io::Result<()> {
 }
 
 
+pub fn login_codex() -> io::Result<()> {
+    run_incus(&[
+        "exec", VM_NAME, "--mode", "interactive", "--",
+        "su", "--login", CODEX_USER,
+        "--command",
+        "exec codex login --device-auth",
+    ])
+}
+
+
 pub fn run_codex() -> io::Result<()> {
     run_incus(&[
         "exec", VM_NAME, "--mode", "interactive", "--",
