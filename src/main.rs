@@ -3,7 +3,7 @@ mod config;
 mod agents;
 mod codex;
 
-use incus::{config_incus, run_vm_session, uninstall};
+use incus::{config_incus, run_vm_session, run_vm_shell_session, uninstall};
 use config::{add_to_allowlist, remove_from_allowlist, list_allowlist};
 use agents::{create_default_agents, edit_agents};
 use clap::{Arg, ArgGroup, Command, ValueHint, ArgAction, value_parser};
@@ -25,6 +25,19 @@ fn build_cli() -> Command {
                         .help("Project directory")
                         .default_value(".")
                         .value_hint(ValueHint::DirPath),
+                )
+                .arg(
+                    Arg::new("vm")
+                        .long("vm")
+                        .help("Open a VM shell without mounting a project")
+                        .action(ArgAction::SetTrue),
+                )
+                .arg(
+                    Arg::new("root")
+                        .long("root")
+                        .help("Open the VM shell as root (requires --vm)")
+                        .requires("vm")
+                        .action(ArgAction::SetTrue),
                 ),
         )
         .subcommand(
@@ -130,8 +143,15 @@ fn main() -> io::Result<()> {
 
     match matches.subcommand() {
         Some(("run", args)) => {
-            let project = args.get_one::<String>("project").expect("has default");
-            run_vm_session(project)?;
+            if args.get_flag("vm") {
+                run_vm_shell_session(args.get_flag("root"))?;
+            } else {
+                let project = args
+                    .get_one::<String>("project")
+                    .expect("has default");
+
+                run_vm_session(project)?;
+            }
         }
         Some(("config", args)) => {
             if args.get_flag("check") {

@@ -53,3 +53,13 @@ pub fn install_codex() -> io::Result<()> {
         "--command", "codex --version",
     ])
 }
+
+
+pub fn run_codex() -> io::Result<()> {
+    run_incus(&[
+        "exec", VM_NAME, "--mode", "interactive", "--",
+        "su", "--login", CODEX_USER,
+        "--command",
+        "exec codex --cd /workspace --sandbox read-only --ask-for-approval never --config 'web_search=\"disabled\"'",
+    ])
+}
