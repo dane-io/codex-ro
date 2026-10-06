@@ -24,6 +24,7 @@ fn build_cli() -> Command {
                         .long("project")
                         .help("Project directory")
                         .default_value(".")
+                        .conflicts_with("vm")
                         .value_hint(ValueHint::DirPath),
                 )
                 .arg(
