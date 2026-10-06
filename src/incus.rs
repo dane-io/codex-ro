@@ -82,6 +82,21 @@ fn start_vm_process() -> io::Result<()> {
 }
 
 
+pub fn check_incus() -> io::Result<()> {
+    println!("VM status:");
+    run_incus(&["info", VM_NAME])?;
+
+    println!("\nVM configuration:");
+    run_incus(&["config", "show", VM_NAME, "--expanded"])?;
+
+    println!("\nBridge configuration:");
+    run_incus(&["network", "show", VM_NIC])?;
+
+    println!("\nACL configuration:");
+    run_incus(&["network", "acl", "show", VM_ACL])
+}
+
+
 fn vm_shell(root: bool) -> io::Result<()> {
     let user = if root { "root" } else { CODEX_USER };
 

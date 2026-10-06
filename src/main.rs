@@ -3,7 +3,7 @@ mod config;
 mod agents;
 mod codex;
 
-use incus::{config_incus, run_vm_session, run_vm_shell_session, uninstall};
+use incus::{config_incus, run_vm_session, run_vm_shell_session, uninstall, check_incus};
 use config::{add_to_allowlist, remove_from_allowlist, list_allowlist};
 use agents::{create_default_agents, edit_agents};
 use clap::{Arg, ArgGroup, Command, ValueHint, ArgAction, value_parser};
@@ -156,7 +156,7 @@ fn main() -> io::Result<()> {
         }
         Some(("config", args)) => {
             if args.get_flag("check") {
-                println!("Would check Incus configuration");
+                check_incus()?;
             }
             else if args.get_flag("init") {
                 config_incus()?;

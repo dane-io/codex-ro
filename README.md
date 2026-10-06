@@ -89,6 +89,9 @@ sudo firewall-cmd --policy=codex-egress --add-disable
 
 # Reload the firewalld policy and check the interface is back
 sudo firewall-cmd --reload
+sudo firewall-cmd --get-zone-of-interface=codexbr0
+sudo firewall-cmd --zone=codex-vm --list-all
+sudo firewall-cmd --info-policy=codex-egress
 ```
 
 ## Install codex-ro binary and initialize
