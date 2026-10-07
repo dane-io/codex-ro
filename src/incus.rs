@@ -1,4 +1,4 @@
-use std::{io, process::Command};
+use std::{env, fs::{self, File, OpenOptions, TryLockError}, io, path::PathBuf, process::Command};
 use crate::config::is_project_path_allowed;
 use crate::agents::copy_agents_to_vm;
 use crate::codex::{create_codex_user, install_codex, run_codex, login_codex, CODEX_USER};
@@ -87,6 +87,29 @@ fn start_vm_process() -> io::Result<()> {
 }
 
 
+fn acquire_vm_lock() -> io::Result<File> {
+    let home = env::var_os("HOME")
+        .ok_or_else(|| io::Error::other("HOME is not set"))?;
+
+    let directory = PathBuf::from(home).join(".config/codex-ro");
+    fs::create_dir_all(&directory)?;
+
+    let file = OpenOptions::new()
+        .write(true)
+        .create(true)
+        .truncate(false)
+        .open(directory.join("vm.lock"))?;
+
+    match file.try_lock() {
+        Ok(()) => Ok(file),
+        Err(TryLockError::WouldBlock) => {
+            Err(io::Error::other("codex-ro VM is already in use"))
+        }
+        Err(TryLockError::Error(error)) => Err(error),
+    }
+}
+
+
 pub fn check_incus() -> io::Result<()> {
     println!("VM status:");
     run_incus(&["info", VM_NAME])?;
@@ -142,6 +165,7 @@ fn unmount_project() -> io::Result<()> {
 
 
 pub fn run_vm_shell_session(root: bool) -> io::Result<()> {
+    let _vm_lock = acquire_vm_lock()?;
     start_vm_process()?;
 
     let session_result = wait_for_vm().and_then(|_| vm_shell(root));
@@ -167,7 +191,8 @@ pub fn run_vm_session(project: &str) -> io::Result<()> {
             "project path is not in the whitelist"
         ));
     }
-    
+
+    let _vm_lock = acquire_vm_lock()?;
     
     let project = std::fs::canonicalize(project)?;
     let project = project.to_str().ok_or_else(|| io::Error::other("project path is not valid UTF-8"))?;
@@ -207,6 +232,7 @@ pub fn run_vm_session(project: &str) -> io::Result<()> {
 
 
 pub fn run_vm_login_session() -> io::Result<()> {
+    let _vm_lock = acquire_vm_lock()?;
     start_vm_process()?;
 
     let login_result = wait_for_vm().and_then(|_| login_codex());
@@ -227,6 +253,7 @@ pub fn run_vm_login_session() -> io::Result<()> {
 
 
 pub fn uninstall() -> io::Result<()> {
+    let _vm_lock = acquire_vm_lock()?;
     let _ = run_incus(&["stop", VM_NAME]);  // May fail if VM is already stopped
     run_incus(&["delete", VM_NAME])?;
     run_incus(&["network", "delete", VM_NIC])?;
@@ -235,6 +262,7 @@ pub fn uninstall() -> io::Result<()> {
 
 
 pub fn config_incus() -> io::Result<()> {
+    let _vm_lock = acquire_vm_lock()?;
     init_incus()?;
     create_bridge()?;
     create_acl()?;
