@@ -78,21 +78,6 @@ sudo firewall-cmd --zone=codex-vm --list-all
 sudo firewall-cmd --info-policy=codex-egress
 ```
 
-To test if it works:
-```bash
-# Try pinging a remote URL inside the VM
-
-# Temporarily disable firewalld policy
-sudo firewall-cmd --policy=codex-egress --add-disable
-
-# Try pining again
-
-# Reload the firewalld policy and check the interface is back
-sudo firewall-cmd --reload
-sudo firewall-cmd --get-zone-of-interface=codexbr0
-sudo firewall-cmd --zone=codex-vm --list-all
-sudo firewall-cmd --info-policy=codex-egress
-```
 
 ## Install codex-ro binary and autocompletions
 ```bash
@@ -111,34 +96,35 @@ codex-ro agents --init
 ```
 
 
+## Test firewalld settings
+```bash
+# Try pinging a remote URL inside the VM
+# This can be done with codex-ro run --vm
+
+# Temporarily disable firewalld policy
+sudo firewall-cmd --policy=codex-egress --add-disable
+
+# Try pining again
+
+# Reload the firewalld policy and check the interface is back
+sudo firewall-cmd --reload
+sudo firewall-cmd --get-zone-of-interface=codexbr0
+sudo firewall-cmd --zone=codex-vm --list-all
+sudo firewall-cmd --info-policy=codex-egress
+```
+
+
 # Uninstall
 ```bash
-# Delete incus VM
-incus stop codex-vm
-incus delete codex-vm
+codex-ro config --deinit
 
-# List trusted interfaces in firewalld
-sudo firewall-cmd --zone=trusted --list-interfaces
-sudo firewall-cmd --permanent --zone=trusted --list-interfaces
-
-# Assuming codexbr0 is in trusted zone
-sudo firewall-cmd --permanent --zone=trusted --remove-interface=codexbr0
+# Remove firewalld changes
+sudo firewall-cmd --permanent --delete-policy=codex-egress
+sudo firewall-cmd --permanent --delete-zone=codex-vm
 sudo firewall-cmd --reload
 
-# If that doesn't remove it, check through nmcli:
-nmcli -g connection.zone connection show codexbr0
-sudo nmcli connection modify codexbr0 connection.zone ""
-sudo firewall-cmd --reload
-
-# If incusbr0 or codexbr0 still persists in trusted zone, remove the entry from /etc/firewalld/zones/trusted.xml
-# Delete the line that looks like: <interface name="incusbr0"/>
-sudo firewall-cmd --check-config
-sudo firewall-cmd --reload
-sudo firewall-cmd --permanent --zone=trusted --list-interfaces
-
-# Delete incus network settings
-incus network delete codexbr0
-incus network acl delete codex-vm-internet
+cargo uninstall codex-ro
+rm ~/.local/share/bash-completion/completions/codex-ro.bash
 
 # Verify incus stuff is gone
 incus list
@@ -163,6 +149,7 @@ codex-ro config --login
 ```
 
 ## Edit global AGENTS.md
+When the VM is started, `AGENTS.md` stored in `~/.config/codex-ro/AGENTS.md` will be copied into `~/.codex/AGENTS.md` inside the VM. To edit the copy saved outside the VM:
 ```bash
 codex-ro agents --edit
 ```
@@ -173,4 +160,4 @@ By calling the `run` subcommand, `codex-ro` will check if your current working d
 codex-ro run
 ```
 
-Note, only one instance of `codex-ro` can be running at a time so duplicate entries aren't populated in `/workspace` inside the VM. This is done via the `vm.lock` file in `~/.config/codex-ro/config.toml`
+Note, only one instance of `codex-ro` can be running at a time so duplicate entries aren't populated in `/workspace` inside the VM. This is done via the `vm.lock` file in `~/.config/codex-ro/vm.lock`
