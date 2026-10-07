@@ -94,11 +94,20 @@ sudo firewall-cmd --zone=codex-vm --list-all
 sudo firewall-cmd --info-policy=codex-egress
 ```
 
-## Install codex-ro binary and initialize
+## Install codex-ro binary and autocompletions
 ```bash
-cargo install
+# Navigate to the repo's folder. Add --force if needing to update
+cargo install --path .
+
+# Generate and save its completions (relies on bash-completion package)
+mkdir -p ~/.local/share/bash-completion/completions
+codex-ro completions bash > ~/.local/share/bash-completion/completions/codex-ro.bash
+
+# Load them in this terminal
+source ~/.local/share/bash-completion/completions/codex-ro.bash
 
 codex-ro config --init
+codex-ro agents --init
 ```
 
 
@@ -142,13 +151,13 @@ incus network acl list
 
 # Use
 ## Allow list
-`codex-ro` uses a whitelist stored in `~/.config/codex-ro/config.toml` to determine if your project can be mounted. This helps prevent accidentally mounting /home which could contain SSH keys, etc. To configure the allow list, check out the `allow` subcommand:
+`codex-ro` uses a whitelist stored in `~/.config/codex-ro/config.toml` to determine if your project can be mounted. This helps prevent accidentally mounting /home which could contain SSH keys, etc. To configure the allow list, check out the `whitelist` subcommand:
 ```bash
 codex-ro whitelist -h
 ```
 An example to add the current working directory:
 ```bash
-codex-ro allow --add .
+codex-ro whitelist --add .
 ```
 
 ## Initialize VM
