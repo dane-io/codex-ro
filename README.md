@@ -99,7 +99,7 @@ codex-ro agents --init
 ## Test firewalld settings
 ```bash
 # Try pinging a remote URL inside the VM
-# This can be done with codex-ro run --vm
+# This can be done with codex-ro run --vm in a different host shell
 
 # Temporarily disable firewalld policy
 sudo firewall-cmd --policy=codex-egress --add-disable
@@ -149,7 +149,7 @@ codex-ro config --login
 ```
 
 ## Edit global AGENTS.md
-When the VM is started, `AGENTS.md` stored in `~/.config/codex-ro/AGENTS.md` will be copied into `~/.codex/AGENTS.md` inside the VM. To edit the copy saved outside the VM:
+When the Codex is started by `codex-ro`, `AGENTS.md` stored in `~/.config/codex-ro/AGENTS.md` will be copied into `~/.codex/AGENTS.md` inside the VM. To edit the copy saved outside the VM:
 ```bash
 codex-ro agents --edit
 ```
@@ -160,4 +160,4 @@ By calling the `run` subcommand, `codex-ro` will check if your current working d
 codex-ro run
 ```
 
-Note, only one instance of `codex-ro` can be running at a time so duplicate entries aren't populated in `/workspace` inside the VM. This is done via the `vm.lock` file in `~/.config/codex-ro/vm.lock`
+Note, only one VM operation of `codex-ro` can be running at a time so duplicate entries aren't populated in `/workspace` inside the VM. This is done via the `vm.lock` file in `~/.config/codex-ro/vm.lock`
