@@ -13,6 +13,7 @@ use std::io;
 
 fn build_cli() -> Command {
     Command::new("codex-ro")
+        .version(env!("CARGO_PKG_VERSION"))
         .about("Run Codex in an Incus VM")
         .subcommand_required(true)
         .arg_required_else_help(true)
