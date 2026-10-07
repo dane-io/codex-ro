@@ -3,3 +3,7 @@
 *.if
 *.fc
 /tmp
+
+# Added by cargo
+
+/target

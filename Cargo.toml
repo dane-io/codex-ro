@@ -1,0 +1,11 @@
+[package]
+name = "codex-ro"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.89"
+
+[dependencies]
+clap = "4.6.7"
+clap_complete = "4.6.11"
+serde = { version = "1.0.229", features = ["derive"] }
+toml = "1.1.6"
