@@ -146,9 +146,6 @@ incus network list
 incus network acl list
 ```
 
-
-**NOTE: this project assumes you have uv on the PATH**
-
 # Use
 ## Allow list
 `codex-ro` uses a whitelist stored in `~/.config/codex-ro/config.toml` to determine if your project can be mounted. This helps prevent accidentally mounting /home which could contain SSH keys, etc. To configure the allow list, check out the `whitelist` subcommand:
@@ -160,17 +157,20 @@ An example to add the current working directory:
 codex-ro whitelist --add .
 ```
 
-## Initialize VM
-
-
 ## Login to Codex
-
+```bash
+codex-ro config --login
+```
 
 ## Edit global AGENTS.md
-
+```bash
+codex-ro agents --edit
+```
 
 ## Run codex
 By calling the `run` subcommand, `codex-ro` will check if your current working directory is in the allow list. If it is, the directory will be mounted as read only to the VM for Codex to see.
 ```bash
 codex-ro run
 ```
+
+Note, only one instance of `codex-ro` can be running at a time so duplicate entries aren't populated in `/workspace` inside the VM. This is done via the `vm.lock` file in `~/.config/codex-ro/config.toml`
