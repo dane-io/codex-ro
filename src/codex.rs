@@ -70,6 +70,6 @@ pub fn run_codex() -> io::Result<()> {
         "exec", VM_NAME, "--mode", "interactive", "--",
         "su", "--login", CODEX_USER,
         "--command",
-        "exec codex --cd /workspace --sandbox read-only --ask-for-approval never --config 'web_search=\"disabled\"'",
+        "exec codex --cd /workspace --sandbox read-only --ask-for-approval never --config 'web_search=\"disabled\"' --config 'features.apps=false'",
     ])
 }
