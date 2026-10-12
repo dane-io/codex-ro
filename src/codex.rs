@@ -55,6 +55,22 @@ pub fn install_codex() -> io::Result<()> {
 }
 
 
+pub fn update_codex() -> io::Result<()> {
+    println!("Updating Codex...");
+
+    run_incus(&[
+        "exec", VM_NAME, "--",
+        "npm", "install", "--global", "@openai/codex@latest",
+    ])?;
+
+    run_incus(&[
+        "exec", VM_NAME, "--",
+        "su", "--login", CODEX_USER,
+        "--command", "codex --version",
+    ])
+}
+
+
 pub fn login_codex() -> io::Result<()> {
     run_incus(&[
         "exec", VM_NAME, "--mode", "interactive", "--",
@@ -70,6 +86,6 @@ pub fn run_codex() -> io::Result<()> {
         "exec", VM_NAME, "--mode", "interactive", "--",
         "su", "--login", CODEX_USER,
         "--command",
-        "exec codex --cd /workspace --sandbox read-only --ask-for-approval never --config 'web_search=\"disabled\"'",
+        "exec codex --cd /workspace --sandbox read-only --ask-for-approval never --config 'web_search=\"disabled\"' --config 'features.apps=false'",
     ])
 }
