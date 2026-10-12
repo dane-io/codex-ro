@@ -39,7 +39,7 @@ pub fn install_codex() -> io::Result<()> {
         "exec", VM_NAME, "--",
         "env", "DEBIAN_FRONTEND=noninteractive",
         "apt-get", "install", "-y", "--no-install-recommends",
-        "ca-certificates", "nodejs", "npm", "git", "unattended-upgrades",
+        "ca-certificates", "nodejs", "npm", "git", "bubblewrap", "unattended-upgrades",
     ])?;
 
     run_incus(&[
