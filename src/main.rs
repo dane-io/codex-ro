@@ -3,7 +3,7 @@ mod config;
 mod agents;
 mod codex;
 
-use incus::{config_incus, run_vm_session, run_vm_shell_session, uninstall, check_incus, run_vm_login_session};
+use incus::{config_incus, run_vm_session, run_vm_shell_session, uninstall, check_incus, run_vm_login_session, run_vm_update_session};
 use config::{add_to_allowlist, remove_from_allowlist, list_allowlist};
 use agents::{create_default_agents, edit_agents};
 use clap::{Arg, ArgGroup, Command, ValueHint, ArgAction, value_parser};
@@ -69,9 +69,15 @@ fn build_cli() -> Command {
                         .help("Login to Codex")
                         .action(ArgAction::SetTrue),
                 )
+                .arg(
+                    Arg::new("update")
+                        .long("update")
+                        .help("Update Codex inside the VM")
+                        .action(ArgAction::SetTrue),
+                )
                 .group(
                     ArgGroup::new("config_action")
-                        .args(["check", "init", "deinit", "login"])
+                        .args(["check", "init", "deinit", "login", "update"])
                         .required(true),
                 )
         )
@@ -167,6 +173,9 @@ fn main() -> io::Result<()> {
             }
             else if args.get_flag("login") {
                 run_vm_login_session()?;
+            }
+            else if args.get_flag("update") {
+                run_vm_update_session()?;
             }
         }
         Some(("whitelist", args)) => {

@@ -1,7 +1,7 @@
 use std::{env, fs::{self, File, OpenOptions, TryLockError}, io, path::PathBuf, process::Command};
 use crate::config::is_project_path_allowed;
 use crate::agents::copy_agents_to_vm;
-use crate::codex::{create_codex_user, install_codex, run_codex, login_codex, CODEX_USER};
+use crate::codex::{create_codex_user, install_codex, run_codex, login_codex, update_codex, CODEX_USER};
 
 
 pub const VM_NAME: &str = "codex-vm";
@@ -245,6 +245,27 @@ pub fn run_vm_login_session() -> io::Result<()> {
         (Err(login_error), Err(stop_error)) => {
             Err(io::Error::other(format!(
                 "Codex login failed: {login_error}; \
+                 additionally failed to stop VM: {stop_error}"
+            )))
+        }
+    }
+}
+
+
+pub fn run_vm_update_session() -> io::Result<()> {
+    let _vm_lock = acquire_vm_lock()?;
+    start_vm_process()?;
+
+    let update_result = wait_for_vm().and_then(|_| update_codex());
+    let stop_result = stop_vm();
+
+    match (update_result, stop_result) {
+        (Ok(()), Ok(())) => Ok(()),
+        (Err(error), Ok(())) => Err(error),
+        (Ok(()), Err(error)) => Err(error),
+        (Err(update_error), Err(stop_error)) => {
+            Err(io::Error::other(format!(
+                "Codex update failed: {update_error}; \
                  additionally failed to stop VM: {stop_error}"
             )))
         }
